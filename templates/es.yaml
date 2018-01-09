@@ -1,0 +1,52 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.elasticsearch.name }}
+  labels:
+    component: {{ .Values.elasticsearch.name }}
+spec:
+  serviceName: "{{ .Values.elasticsearch.name }}"
+  replicas: {{ .Values.elasticsearch.replicaCount }}
+  template:
+    metadata:
+      labels:
+        component: {{ .Values.elasticsearch.name }}
+    spec:
+      serviceAccount: {{ .Values.elasticsearch.name }}
+      containers:
+      - name: {{ .Values.elasticsearch.name }}
+        image: "{{ .Values.elasticsearch.image.repository }}:{{ .Values.elasticsearch.image.tag }}"
+        env:
+{{ toYaml .Values.elasticsearch.env | indent 10 }}
+        ports:
+        - containerPort: {{ .Values.elasticsearch.service.http.internalPort }}
+          name: {{ .Values.elasticsearch.service.http.name }}
+          protocol: TCP
+        - containerPort: {{ .Values.elasticsearch.service.discovery.internalPort }}
+          name: {{ .Values.elasticsearch.service.discovery.name }}
+          protocol: TCP
+        securityContext:
+          capabilities:
+            add:
+              - IPC_LOCK
+        volumeMounts:
+        - mountPath: {{ .Values.elasticsearch.volume.data.mountPath }}
+          name: {{ .Values.elasticsearch.volume.data.name }}
+        resources:
+{{ toYaml .Values.elasticsearch.resources | indent 10 }}
+      initContainers:
+      - name: sysctl
+        image: busybox
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        securityContext:
+          privileged: true
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Values.elasticsearch.volume.data.name }}
+      annotations:
+        volume.beta.kubernetes.io/storage-class: "{{ template "fullname" . }}-ssd"
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.elasticsearch.volume.data.size }}

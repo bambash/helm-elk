@@ -1,0 +1,20 @@
+{{- $name := .Values.logstash.name -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+spec:
+  type: {{ .Values.logstash.service.type }}
+  ports:
+  - port: {{ .Values.logstash.service.pipeline.externalPort }}
+    targetPort: {{ .Values.logstash.service.pipeline.internalPort }}
+    protocol: TCP
+    name: logstash-tcp
+  - port: {{ .Values.logstash.service.pipeline.externalPort }}
+    targetPort: {{ .Values.logstash.service.pipeline.internalPort }}
+    protocol: UDP
+    name: logstash-udp
+  selector:
+    app: {{ $name }}

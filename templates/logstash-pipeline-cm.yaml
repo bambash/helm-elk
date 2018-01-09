@@ -1,0 +1,34 @@
+apiVersion: v1
+data:
+  01-pipeline.conf: |
+    input {
+      udp {
+        port  => 5000
+        codec => json
+        type  => "logspout"
+      }
+      tcp {
+        port  => 5000
+        codec => json
+        type  => "logspout"
+      }
+    }
+    filter {
+      if [type] == "logspout" {
+        if [docker][hostname] =~ "ingress-nginx" {
+          grok {
+            match => { "message" => '%{IP:client_ip} \- \[%{IP:real_ip}\] \- %{USER:user} \[%{HTTPDATE:datetime}\] \"%{WORD:method} %{URIPATHPARAM:request} HTTP/%{NUMBER:httpversion}\" %{NUMBER:response} %{NUMBER:bytes} \"%{DATA:req_url}\" \"%{DATA:agent}\" %{NUMBER:req_length} %{DATA:req_time} \[%{DATA:upstream_service}\] %{DATA:upstream_ip} %{NUMBER:upstream_response_length} %{GREEDYDATA:message}' }
+          }
+        }
+      }
+    }
+    output {
+      elasticsearch {
+        hosts => ["elasticsearch:9200"]
+        index => "logstash-%{+YYYY.MM.dd}"
+        action => "index"
+      }
+    }
+kind: ConfigMap
+metadata:
+  name: pipelines

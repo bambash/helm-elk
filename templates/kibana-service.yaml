@@ -1,0 +1,16 @@
+{{- $name := .Values.kibana.name -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+spec:
+  type: {{ .Values.kibana.service.type }}
+  ports:
+  - port: {{ .Values.kibana.service.externalPort }}
+    targetPort: {{ .Values.kibana.service.internalPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ $name }}

@@ -1,0 +1,131 @@
+logspout:
+  name: logspout
+  image:
+    repository: bekt/logspout-logstash
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 5m
+      memory: 16Mi
+    requests:
+      cpu: 5m
+      memory: 16Mi
+  volume:
+    docker:
+      name: docker-socket
+      hostPath: /var/run/docker.sock
+      mountPath: /var/run/docker.sock
+      readOnly: true
+logstash:
+  name: logstash
+  replicaCount: 2
+  image:
+    repository: bambash/logstash
+    tag: 5.5.2
+    pullPolicy: Always
+  service:
+    pipeline:
+      name: logstash
+      type: ClusterIP
+      externalPort: 5000
+      internalPort: 5000
+  resources:
+    limits:
+      cpu: 50m
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 512Mi
+  probe:
+    readiness:
+      port: 5000
+      periodSeconds: 10
+      timeoutSeconds: 5
+      successThreshold: 2
+      failureThreshold: 5
+  volume:
+    pipeline:
+      name: pipeline
+      mountPath: /usr/share/logstash/pipeline
+elasticsearch:
+  name: elasticsearch
+  replicaCount: 3
+  image:
+    repository: bambash/es-kubernetes
+    tag: 5.5.2
+    pullPolicy: Always
+  service:
+    http:
+      name: http
+      type: ClusterIP
+      externalPort: 9200
+      internalPort: 9200
+    discovery:
+      name: discovery
+      type: ClusterIP
+      externalPort: 9300
+      internalPort: 9300
+  env:
+  - name: KUBERNETES_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+  - name: NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: "SERVICE"
+    value: "elasticsearch"
+  - name: NODE_MASTER
+    value: "true"
+  - name: NODE_DATA
+    value: "true"
+  - name: MINIMUM_MASTER_NODES
+    value: "1"
+  - name: ES_JAVA_OPTS
+    value: "-Xms1g -Xmx1g"
+  resources:
+    limits:
+      cpu: 300m
+      memory: 1536Mi
+    requests:
+      cpu: 300m
+      memory: 1536Mi
+  probe:
+    readiness:
+      port: 9200
+      periodSeconds: 10
+      timeoutSeconds: 5
+      successThreshold: 2
+      failureThreshold: 5
+  volume:
+    data:
+      name: es-data
+      mountPath: /data
+      size: 25Gi
+kibana:
+  name: kibana
+  replicas: 1
+  image:
+    repository: bambash/kibana
+    tag: 5.5.2
+    pullPolicy: Always
+  service:
+    name: kibana
+    externalPort: 5601
+    internalPort: 5601
+    type: ClusterIP
+  resources:
+    limits:
+      cpu: 25m
+      memory: 512Mi
+    requests:
+      cpu: 25m
+      memory: 512Mi
+  ingress:
+    enabled: false
+    hosts:
+      - kibana.yourdomain.com
+    annotations:
+      kubernetes.io/ingress.class: internal-nginx

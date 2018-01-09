@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: kibana-basic-auth
+data:
+  auth: a2liYW5hOiRhcHIxJHR2eTJ5RHpFJGNNV2swUzViZlpwMlJDMHA2NzVndy4K

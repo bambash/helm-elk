@@ -1,0 +1,34 @@
+{{- $name := .Values.logspout.name -}}
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: {{ $name }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    name: {{ $name }}
+spec:
+  selector:
+    matchLabels:
+      name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        name: {{ $name }}
+    spec:
+      containers:
+      - name: {{ $name }}
+        image: "{{ .Values.logspout.image.repository }}:{{ .Values.logspout.image.tag }}"
+        imagePullPolicy: {{ .Values.logspout.image.pullPolicy }}
+        env:
+          - name: ROUTE_URIS
+            value: "logstash+tcp://{{ .Values.logstash.service.pipeline.name }}:{{ .Values.logstash.service.pipeline.externalPort }}"
+        volumeMounts:
+        - name: {{ .Values.logspout.volume.docker.name }}
+          mountPath: {{ .Values.logspout.volume.docker.mountPath }}
+      volumes:
+      - name: {{ .Values.logspout.volume.docker.name }}
+        hostPath:
+          path:  {{ .Values.logspout.volume.docker.hostPath }}
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists

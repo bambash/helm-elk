@@ -1,0 +1,36 @@
+{{- $name := .Values.logstash.name -}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app: {{ $name }}
+spec:
+  replicas: {{ .Values.logstash.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}-{{ $name }}
+        image: "{{ .Values.logstash.image.repository }}:{{ .Values.logstash.image.tag }}"
+        imagePullPolicy: {{ .Values.logstash.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.logstash.service.pipeline.internalPort }}
+          protocol: TCP
+        volumeMounts:
+        - name: pipelines
+          mountPath: /usr/share/logstash/pipeline
+      volumes:
+      - name: pipelines
+        configMap:
+          name: pipelines

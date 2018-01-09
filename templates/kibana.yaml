@@ -1,0 +1,40 @@
+{{- $name := .Values.kibana.name -}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app: {{ $name }}
+spec:
+  replicas: {{ .Values.kibana.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}-{{ $name }}
+        image: "{{ .Values.kibana.image.repository }}:{{ .Values.kibana.image.tag }}"
+        imagePullPolicy: {{ .Values.kibana.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.kibana.service.internalPort }}
+          protocol: TCP
+        resources:
+          # keep request = limit to keep this container in guaranteed class
+          limits:
+            cpu: 100m
+          requests:
+            cpu: 100m
+        env:
+          - name: "ELASTICSEARCH_URL"
+            value: "http://elasticsearch:9200"
+          - name: "SERVER_HOST"
+            value: "0.0.0.0"

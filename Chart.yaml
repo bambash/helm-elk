@@ -1,0 +1,15 @@
+name: elk
+description: Elasticsearch Logstash Kibana (logspout)
+version: 0.1.0
+keywords:
+  - elk
+  - logstash
+  - logspout
+  - elasticsearch
+  - kibana
+home: "https://www.elastic.co/webinars/introduction-elk-stack"
+sources:
+  - "https://www.elastic.co/webinars/introduction-elk-stack"
+maintainers:
+  - name: bambash
+    email: bambash256@gmail.com
